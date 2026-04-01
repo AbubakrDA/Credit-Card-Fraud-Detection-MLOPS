@@ -1,0 +1,8 @@
+# Dependencies for the FastAPI serving application
+# We keep this lightweight to minimize operations and Docker image size overhead.
+fastapi
+uvicorn
+pydantic
+mlflow
+pandas
+scikit-learn

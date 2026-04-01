@@ -1,0 +1,10 @@
+# Dependencies for the ML training pipeline
+# This includes the stack required to load data, train models, handle class imbalance, and log experiments.
+pandas
+numpy
+scikit-learn
+mlflow
+matplotlib
+seaborn
+imbalanced-learn
+xgboost
