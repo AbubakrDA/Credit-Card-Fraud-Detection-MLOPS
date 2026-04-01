@@ -138,6 +138,30 @@ python -c "from pipelines.training_pipeline import run_training_pipeline; run_tr
 ```
 This logs everything into a local `./mlruns` directory.
 
+### 4. Windows Visual Orchestrator (Dashboard)
+Since Airflow is native to Linux/Docker, use the included **MLOps Dashboard** for a visual experience on Windows:
+```bash
+streamlit run dashboard.py
+```
+This dashboard visualizes your DAG, allows triggering a training run, and displays live MLflow metrics.
+
+---
+
+## 🛠️ Advanced: Running Official Airflow UI on Windows
+If you want the authentic Airflow experience without Docker, you must use **WSL2 (Windows Subsystem for Linux)**:
+
+1. **Install WSL2:** In PowerShell (Admin), run `wsl --install`. Restart Windows.
+2. **Setup Ubuntu:** Open "Ubuntu" from the start menu.
+3. **Install Airflow:**
+   ```bash
+   sudo apt update && sudo apt install python3-pip python3-venv -y
+   python3 -m venv venv && source venv/bin/activate
+   pip install apache-airflow
+   airflow db init
+   airflow webserver --port 8080
+   ```
+4. **Access:** Open `http://localhost:8080` in your Windows browser.
+
 ### 4. Boot the Microservices
 Start the API and the internal MLflow UI:
 ```bash
