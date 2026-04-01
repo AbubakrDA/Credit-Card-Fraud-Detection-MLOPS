@@ -76,9 +76,12 @@ def run_standalone_pipeline():
                 mlflow.log_artifact(cm_filename)
                 
                 # Model Registration
+                # We register the model so the API can load it via a stable name 
+                # (e.g. models:/FraudDetector/1) instead of a transient Run ID.
                 mlflow.sklearn.log_model(
                     sk_model=full_pipeline, 
-                    artifact_path="fraud_pipeline_model"
+                    artifact_path="fraud_pipeline_model",
+                    registered_model_name="FraudDetector"
                 )
                 
                 print(f"    Metrics: {metrics}")
