@@ -1,23 +1,61 @@
+"""
+Project-wide configuration for the Credit Card Fraud Detection MLOps platform.
+
+All paths, ML parameters, and tracking URIs are centralized here to ensure
+consistency across training, evaluation, and serving components.
+"""
+
 import os
+import logging
 from pathlib import Path
 
-# Paths
-BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_PATH = BASE_DIR / "creditcard.csv"
-# We use SQLite to enable the MLflow Model Registry locally.
-MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", f"sqlite:///{BASE_DIR}/mlflow.db")
+# ---------------------------------------------------------------------------
+# LOGGING
+# ---------------------------------------------------------------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+)
+logger = logging.getLogger(__name__)
 
-# Features
-TARGET_COL = "Class"
-TIME_COL = "Time"
-AMOUNT_COL = "Amount"
-PCA_COLS = [f"V{i}" for i in range(1, 29)]
+# ---------------------------------------------------------------------------
+# PATHS
+# ---------------------------------------------------------------------------
+BASE_DIR: Path = Path(__file__).resolve().parent.parent
+DATA_PATH: Path = BASE_DIR / "creditcard.csv"
 
-# Model Training Parameters
-TEST_SIZE = 0.2
-RANDOM_STATE = 42
+# ---------------------------------------------------------------------------
+# DATASET COLUMNS
+# ---------------------------------------------------------------------------
+TARGET_COL: str = "Class"
+TIME_COL: str = "Time"
+AMOUNT_COL: str = "Amount"
+PCA_COLS: list = [f"V{i}" for i in range(1, 29)]
 
-# Best Model Selection Rules
-# These explicitly prioritize the constraints of credit card fraud detection
-MIN_RECALL_THRESHOLD = 0.75
-MIN_PRECISION_THRESHOLD = 0.80
+# ---------------------------------------------------------------------------
+# TRAINING CONFIGURATION
+# ---------------------------------------------------------------------------
+TEST_SIZE: float = 0.2
+RANDOM_STATE: int = 42
+
+# ---------------------------------------------------------------------------
+# MLFLOW / MODEL REGISTRY
+# ---------------------------------------------------------------------------
+EXPERIMENT_NAME: str = "Credit_Card_Fraud_Detection"
+
+# Supports both local SQLite (Windows dev) and remote HTTP (Docker/Production)
+MLFLOW_TRACKING_URI: str = os.getenv(
+    "MLFLOW_TRACKING_URI",
+    f"sqlite:///{BASE_DIR}/mlflow.db"
+)
+
+# ---------------------------------------------------------------------------
+# BUSINESS LOGIC THRESHOLDS
+# ---------------------------------------------------------------------------
+# These enforce fraud-domain constraints before selecting the champion model.
+# Recall >= 0.75: We cannot miss too many real fraud cases (false negatives).
+# Precision >= 0.80: We cannot flag too many legit transactions (false positives).
+MIN_RECALL_THRESHOLD: float = 0.75
+MIN_PRECISION_THRESHOLD: float = 0.80
+
+logger.info("Project configuration loaded. Base directory: %s", BASE_DIR)

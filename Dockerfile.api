@@ -1,27 +1,40 @@
-# Use official slim Python image to keep the image lightweight
-FROM python:3.10-slim
+# Stage 1: Builder - Install dependencies in a clean environment
+FROM python:3.10-slim AS builder
 
-# Why this matters in MLOps:
-# A dedicated Workdir avoids polluting the root filesystem
 WORKDIR /app
 
-# Install system dependencies required for building scikit-learn/pandas
+# Install build tools needed to compile native extensions
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy only the API requirements. 
-# We explicitly avoid installing airflow, jupyter, or xgboost here
-# because inference containers should be as small and secure as possible.
-COPY requirements/api.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy and install requirements separately to leverage Docker layer caching
+COPY requirements/api.txt requirements.txt
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-# Copy source code
+
+# Stage 2: Runtime - Copy only what is needed to keep image small & secure
+FROM python:3.10-slim AS runtime
+
+WORKDIR /app
+
+# Copy installed packages from the builder stage
+COPY --from=builder /install /usr/local
+
+# Copy only the application source code
 COPY ./app /app/app
 COPY ./src /app/src
 
-# Expose FastAPI default port
+# Create a non-root user for security best practices
+RUN adduser --disabled-password --gecos '' appuser
+USER appuser
+
+# Expose FastAPI port
 EXPOSE 8000
 
-# Run the API via Uvicorn. Host 0.0.0.0 enables external access.
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Health check for Docker Compose orchestration
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+
+# Launch Uvicorn with production settings
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
